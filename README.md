@@ -12,6 +12,16 @@ This repository contains the following contents.
 * Learning data for hand sign recognition and notebook for learning
 * Learning data for finger gesture recognition and notebook for learning
 
+# Setup Venv for pycharm project
+* Open terminal
+* Type in "python -m venv <name_of_your_venv>"
+* Open project in pycharm
+* Go to File -> Settings -> Project -> Python Interpreter
+* Click on the gear icon and select "Add"
+* Select "Existing environment"
+* Select the python.exe from your venv folder
+* Click "Ok"
+
 # Requirements
 * mediapipe 0.8.1
 * OpenCV 3.4.2 or Later
