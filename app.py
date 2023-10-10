@@ -6,6 +6,7 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
+import platform as p
 
 import cv2 as cv
 import numpy as np
@@ -51,9 +52,12 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
 
     use_brect = True
-
+    cap = None
     # Camera preparation ###############################################################
-    cap = cv.VideoCapture(cap_device)
+    if p.system() == "Darwin":
+        cap = cv.VideoCapture(cap_device, cv.CAP_AVFOUNDATION)
+    else:
+        cap = cv.VideoCapture(cap_device, cv.CAP_DSHOW)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
@@ -61,7 +65,7 @@ def main():
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
-        max_num_hands=1,
+        max_num_hands=2,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )

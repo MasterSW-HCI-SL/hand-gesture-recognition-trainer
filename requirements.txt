@@ -1,0 +1,6 @@
+mediapipe
+tensorflow
+opencv-python
+scikit-learn
+pandas
+seaborn
