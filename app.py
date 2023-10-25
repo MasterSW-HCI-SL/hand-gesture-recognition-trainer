@@ -101,6 +101,10 @@ def main():
 
     #  ########################################################################
     mode = 0
+    points_left: list = [0, 0]
+
+    # CHANGE THIS TO THE LENGTH OF THE DATASET CLASSIFIERS
+    classifier = 3
 
     while True:
         fps = cvFpsCalc.get()
@@ -109,7 +113,7 @@ def main():
         key = cv.waitKey(10)
         if key == 27:  # ESC
             break
-        number, mode = select_mode(key, mode)
+        number, mode, points_left = select_mode(key, mode, points_left)
 
         # Camera capture #####################################################
         ret, image = cap.read()
@@ -141,7 +145,7 @@ def main():
                     debug_image, point_history)
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list,
-                            pre_processed_point_history_list)
+                            pre_processed_point_history_list, classifier)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
@@ -176,7 +180,7 @@ def main():
             point_history.append([0, 0])
 
         debug_image = draw_point_history(debug_image, point_history)
-        debug_image = draw_info(debug_image, fps, mode, number)
+        debug_image = draw_info(debug_image, fps, mode, points_left)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
@@ -185,17 +189,22 @@ def main():
     cv.destroyAllWindows()
 
 
-def select_mode(key, mode):
+def select_mode(key, mode, points):
     number = -1
-    if 48 <= key <= 57:  # 0 ~ 9
-        number = key - 48
-    if key == 110:  # n
-        mode = 0
-    if key == 107:  # k
-        mode = 1
-    if key == 104:  # h
-        mode = 2
-    return number, mode
+    # r = 114, space = 32
+    if key == 114:
+        mode = 3
+        points = [25, 25]
+    if key == 32:
+        print("Hit space")
+        if points[0] != 0:
+            points[0] -= 1
+        elif points[1] != 0:
+            if points[1] == 1:
+                mode = 0
+            points[1] -= 1
+        number = 32
+    return number, mode, points
 
 
 def calc_bounding_rect(image, landmarks):
@@ -282,19 +291,26 @@ def pre_process_point_history(image, point_history):
     return temp_point_history
 
 
-def logging_csv(number, mode, landmark_list, point_history_list):
+# TODO: Need to make it so the number changes depending on how many total gestures there is.
+def logging_csv(number, mode, landmark_list, point_history_list, classifier):
     if mode == 0:
         pass
-    if mode == 1 and (0 <= number <= 9):
+    if mode == 3 and number == 32:
+        print("logging")
         csv_path = 'model/keypoint_classifier/keypoint.csv'
-        with open(csv_path, 'a', newline="") as f:
+        with (open(csv_path, 'a', newline="") as f):
             writer = csv.writer(f)
-            writer.writerow([number, *landmark_list])
-    if mode == 2 and (0 <= number <= 9):
-        csv_path = 'model/point_history_classifier/point_history.csv'
-        with open(csv_path, 'a', newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow([number, *point_history_list])
+            writer.writerow([classifier, *landmark_list])
+    # if mode == 1 and (0 <= number <= 9):
+    #   csv_path = 'model/keypoint_classifier/keypoint.csv'
+    #  with (open(csv_path, 'a', newline="") as f):
+    #      writer = csv.writer(f)
+    #     writer.writerow([number, *landmark_list])
+    # if mode == 2 and (0 <= number <= 9):
+    #   csv_path = 'model/point_history_classifier/point_history.csv'
+    #  with open(csv_path, 'a', newline="") as f:
+    #     writer = csv.writer(f)
+    #    writer.writerow([number, *point_history_list])
     return
 
 
@@ -525,21 +541,33 @@ def draw_point_history(image, point_history):
     return image
 
 
-def draw_info(image, fps, mode, number):
+def draw_info(image, fps, mode, points):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
-
-    mode_string = ['Logging Key Point', 'Logging Point History']
-    if 1 <= mode <= 2:
-        cv.putText(image, "MODE:" + mode_string[mode - 1], (10, 90),
+    if mode == 3:
+        cv.putText(image, "MODE: Recording!", (10, 90),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                    cv.LINE_AA)
-        if 0 <= number <= 9:
-            cv.putText(image, "NUM:" + str(number), (10, 110),
+        cv.putText(image, "To record a data points, press 'space'", (10, 130),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
+                   cv.LINE_AA)
+        if points[0] != 0:
+            cv.putText(image, f"Recording right hand - Points left {points[0]}", (10, 110),
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
+        elif points[1] != 0:
+            cv.putText(image, f"Recording Left hand - Points left {points[1]}", (10, 110),
+                       cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
+                       cv.LINE_AA)
+    else:
+        cv.putText(image, "MODE: Waiting...", (10, 90),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
+                   cv.LINE_AA)
+        cv.putText(image, 'To start recording, press "r"', (10, 110),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
+                   cv.LINE_AA)
     return image
 
 
