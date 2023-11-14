@@ -101,7 +101,7 @@ def main():
 
     #  ########################################################################
     mode = 0
-    points_left: list = [0, 0]
+    points_left: int = 0
 
     # CHANGE THIS TO THE LENGTH OF THE DATASET CLASSIFIERS
     classifier = 3
@@ -113,7 +113,7 @@ def main():
         key = cv.waitKey(10)
         if key == 27:  # ESC
             break
-        number, mode, points_left = select_mode(key, mode, points_left)
+        number, mode, points_left, classifier = select_mode(key, mode, points_left, classifier)
 
         # Camera capture #####################################################
         ret, image = cap.read()
@@ -180,7 +180,7 @@ def main():
             point_history.append([0, 0])
 
         debug_image = draw_point_history(debug_image, point_history)
-        debug_image = draw_info(debug_image, fps, mode, points_left)
+        debug_image = draw_info(debug_image, fps, mode, points_left, classifier)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
@@ -189,22 +189,21 @@ def main():
     cv.destroyAllWindows()
 
 
-def select_mode(key, mode, points):
+def select_mode(key, mode, points, classifier):
     number = -1
     # r = 114, space = 32
     if key == 114:
         mode = 3
-        points = [25, 25]
+        points = 25
     if key == 32:
-        print("Hit space")
-        if points[0] != 0:
-            points[0] -= 1
-        elif points[1] != 0:
-            if points[1] == 1:
-                mode = 0
-            points[1] -= 1
+        if points == 1:
+            points -= 1
+            mode = 0
+            classifier = classifier + 1
+        elif points != 0:
+            points -= 1
         number = 32
-    return number, mode, points
+    return number, mode, points, classifier
 
 
 def calc_bounding_rect(image, landmarks):
@@ -291,12 +290,10 @@ def pre_process_point_history(image, point_history):
     return temp_point_history
 
 
-# TODO: Need to make it so the number changes depending on how many total gestures there is.
 def logging_csv(number, mode, landmark_list, point_history_list, classifier):
     if mode == 0:
         pass
     if mode == 3 and number == 32:
-        print("logging")
         csv_path = 'model/keypoint_classifier/keypoint.csv'
         with (open(csv_path, 'a', newline="") as f):
             writer = csv.writer(f)
@@ -541,7 +538,7 @@ def draw_point_history(image, point_history):
     return image
 
 
-def draw_info(image, fps, mode, points):
+def draw_info(image, fps, mode, points, classifier):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
@@ -553,12 +550,11 @@ def draw_info(image, fps, mode, points):
         cv.putText(image, "To record a data points, press 'space'", (10, 130),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                    cv.LINE_AA)
-        if points[0] != 0:
-            cv.putText(image, f"Recording right hand - Points left {points[0]}", (10, 110),
+        if points != 0:
+            cv.putText(image, f"Recording hands - Points left {points}", (10, 110),
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
-        elif points[1] != 0:
-            cv.putText(image, f"Recording Left hand - Points left {points[1]}", (10, 110),
+            cv.putText(image, f"Current classifier {classifier}", (10, 150),
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
     else:
