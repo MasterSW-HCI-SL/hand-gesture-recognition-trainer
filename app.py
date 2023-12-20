@@ -104,7 +104,7 @@ def main():
     points_left: int = 0
 
     # CHANGE THIS TO THE LENGTH OF THE DATASET CLASSIFIERS
-    classifier = 3
+    classifier = 6
 
     while True:
         fps = cvFpsCalc.get()
@@ -119,7 +119,7 @@ def main():
         ret, image = cap.read()
         if not ret:
             break
-        image = cv.flip(image, 1)  # Mirror display
+        #image = cv.flip(image, 1)  # Mirror display
         debug_image = copy.deepcopy(image)
 
         # Detection implementation #############################################################
