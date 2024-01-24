@@ -66,7 +66,7 @@ def main():
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
         max_num_hands=2,
-        min_detection_confidence=min_detection_confidence,
+        min_detection_confidence=0.95,
         min_tracking_confidence=min_tracking_confidence,
     )
 
@@ -104,7 +104,7 @@ def main():
     points_left: int = 0
 
     # CHANGE THIS TO THE LENGTH OF THE DATASET CLASSIFIERS
-    classifier = 6
+    classifier = 29
 
     while True:
         fps = cvFpsCalc.get()
@@ -194,7 +194,7 @@ def select_mode(key, mode, points, classifier):
     # r = 114, space = 32
     if key == 114:
         mode = 3
-        points = 25
+        points = 50
     if key == 32:
         if points == 1:
             points -= 1
